@@ -1,0 +1,76 @@
+# $Id$
+
+PortSystem 1.0
+
+name			iplike-pg80
+version			1.0.6
+revision		17
+categories		databases
+platforms		darwin
+maintainers		brozow@opennms.org
+description		Postgresql stored procedure for IP Address strings
+long_description 	This port contains a function that will match ipaddress strings \
+			of the form iplike(ipaddr, '10.*.*.*') and more complicated expressions.
+
+homepage		http://www.opennms.org/
+
+distname		iplike-${version}
+master_sites		sourceforge:opennms
+
+checksums		md5 2d98c2f6e08136f45f9740d4c129d171 \
+			sha1 0879af5b4a0f811bd4418d46ca1cbb4ba1fa6789 \
+			rmd160 a35bc430af20b43f54e58c3b15e32b0a647d1b3f
+
+build.type		gnu
+
+test.run		yes
+test.target		check
+
+livecheck.check		sourceforge
+livecheck.url		opennms
+livecheck.distname	iplike
+
+
+set postgres-dependency	postgresql80
+set postgres-dirname	pgsql8
+set postgres-user	postgres
+
+depends_build		port:autoconf port:automake port:libtool
+configure.args		--with-pgsql=${prefix}/lib/${postgres-dirname}/bin/pg_config
+
+pre-fetch {
+	registry_active ${postgres-dependency}
+}
+
+set iplike-version [string map { . _ - _} ${name}]
+
+pre-configure {
+        
+	reinplace "s,iplike_la,${iplike-version}_la,g" ${worksrcpath}/Makefile.am
+	reinplace "s,iplike\[^_\]la,${name}.la,g" ${worksrcpath}/Makefile.am ${worksrcpath}/install_iplike.sh.in
+
+	ui_info "executing autoreconf"
+	system "cd ${worksrcpath} && autoreconf -fvi"
+
+}
+
+post-destroot {
+	move ${destroot}${prefix}/sbin/install_iplike.sh ${destroot}${prefix}/sbin/install_${iplike-version}.sh
+}
+
+post-activate		{
+	set dbuser [find-first-user ${postgres-user} postgres]
+        ui_msg "---> Installing iplike function in database template1 as user ${dbuser}"
+	system "${prefix}/sbin/install_${iplike-version}.sh -u ${dbuser} -d template1"
+}
+
+proc find-first-user {args} {
+	foreach user ${args} {
+		ui_info "Looking for postgres user ${user}"
+	        if { [existsuser ${user}] } {
+			return ${user}
+		}
+        }
+	error "Unable to find the postgres user"
+}
+

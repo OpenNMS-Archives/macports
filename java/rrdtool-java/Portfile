@@ -1,0 +1,33 @@
+# $Id$
+
+PortSystem 1.0
+
+name			jrrd
+version			1.0.1
+revision		0
+categories		databases
+platforms		darwin
+maintainers		brozow@opennms.org
+description		Java API for calling rrdtool shared library
+long_description 	This provides a Java API that allows access to the rrdtool \
+			shared library via JNI for use in applications that need to \
+			store rrd data and create rrd graphs.
+
+homepage		http://www.opennms.org/
+
+distname		${name}-${version}
+master_sites		sourceforge:opennms
+
+checksums		md5 284714581b606bc56eb3dde99e19176e
+
+build.type		gnu
+
+test.run		yes
+test.target		check
+
+livecheck.check		sourceforge
+livecheck.url		opennms
+livecheck.distname	jrrd
+
+depends_build		port:rrdtool
+
